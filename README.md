@@ -6,7 +6,7 @@ The allrounder framework with useful sets of tools and libraries written in Java
 # Makefile 
 ```
 # Start docker container stack as daemon and print logs
-make docker-rundl
+make rundl
 ```
 
 ```
