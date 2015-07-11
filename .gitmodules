@@ -1,0 +1,6 @@
+[submodule "DX.js"]
+	path = DX.js
+	url = git@github.com:deacix/DX.js.git
+[submodule "DX.java"]
+	path = DX.java
+	url = git@github.com:deacix/DX.java.git
