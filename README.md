@@ -30,6 +30,19 @@ Print all commands
     base:
       help.....................Show this help
 
+Example Makefile to use with multiple docker stacks in a project:
+
+	BASE_PATH=`pwd`
+    YML=$(BASE_PATH)/docker/stacks/main/docker-compose.yml
+    ECO_YML=$(BASE_PATH)/docker/stacks/eco/docker-compose.yml
+    
+    include DX/Makefile
+    
+    eco:
+    	$(eval YML=$(ECO_YML))
+    	@echo -n "Set ECO Stack: "
+    	@echo -e "$(OK_STRING)"
+
 Links
 -----
     

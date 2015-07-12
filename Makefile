@@ -84,7 +84,10 @@ OK_STRING=$(OK_COLOR)[OK]$(NO_COLOR)
 ERROR_STRING=$(ERROR_COLOR)[ERRORS]$(NO_COLOR)
 WARN_STRING=$(WARN_COLOR)[INFO]$(NO_COLOR)
 
+VERBOSE ?= false
 YML ?= docker-compose.yml
+PROJECT_NAME ?=
+PROJECT_FLAG = `if [ ! -z $(PROJECT_NAME) ]; then echo -n "-p $(PROJECT_NAME) "; fi`
 
 HELP_FUN = \
 		%help; \
@@ -108,31 +111,98 @@ help:				##@base Show this help
 	#
 	@perl -e '$(HELP_FUN)' $(MAKEFILE_LIST)
 
+.PHONY: run
 run: destroy				##@docker Run container stack
 	@echo -n "Run container stack:"
-	@docker-compose -f $(YML) up 1>/dev/null 2> temp.log || touch temp.errors
+	@if [ ! $(VERBOSE) ]; \
+    	then \
+    		docker-compose $(PROJECT_FLAG)-f $(YML) up 1>/dev/null 2> temp.log || touch temp.errors; \
+    	else \
+    		docker-compose $(PROJECT_FLAG)-f $(YML) up; \
+    	fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
+.PHONY: rund
 rund: destroy				##@docker Run container stack as daemon
 	@echo -n "Run container stack as daemon: "
-	@docker-compose -f $(YML) up -d 1>/dev/null 2> temp.log || touch temp.errors
+	@if [ ! $(VERBOSE) ]; \
+    	then \
+    		docker-compose $(PROJECT_FLAG)-f $(YML) up -d 1>/dev/null 2> temp.log || touch temp.errors; \
+    	else \
+    		docker-compose $(PROJECT_FLAG)-f $(YML) up -d; \
+    	fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
-rundl: rund				##@docker Print logs
-	@echo "Print logs: "
-	@docker-compose -f $(YML) logs
+.PHONY: rundl
+rundl: rund logs				##@docker Run container stack as daemon and show logs
 
+.PHONY: stop
 stop:				##@docker Stop container stack
 	@echo -n "Stop container stack: "
-	@docker-compose -f $(YML) stop 1>/dev/null 2> temp.log || touch temp.errors
+	@if [ ! $(VERBOSE) ]; \
+        then \
+            docker-compose $(PROJECT_FLAG)-f $(YML) stop 1>/dev/null 2> temp.log || touch temp.errors; \
+        else \
+            docker-compose $(PROJECT_FLAG)-f $(YML) stop; \
+        fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
+.PHONY: kill
 kill:				##@docker Kill container stack
 	@echo -n "Kill container stack: "
-	@docker-compose -f $(YML) kill 1>/dev/null 2> temp.log || touch temp.errors
+	@if [ ! $(VERBOSE) ]; \
+	    then \
+	        docker-compose $(PROJECT_FLAG)-f $(YML) kill 1>/dev/null 2> temp.log || touch temp.errors; \
+	    else \
+	        docker-compose $(PROJECT_FLAG)-f $(YML) kill; \
+	    fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
+.PHONY: destroy
 destroy: kill				##@docker Destroy container stack
 	@echo -n "Remove container stack: "
-	@docker-compose -f $(YML) rm -v -f 1>/dev/null 2>> temp.log || touch temp.errors
+	@if [ ! $(VERBOSE) ]; \
+	    then \
+	        docker-compose $(PROJECT_FLAG)-f $(YML) rm -v -f 1>/dev/null 2> temp.log || touch temp.errors; \
+	    else \
+	        docker-compose $(PROJECT_FLAG)-f $(YML) rm -v -f; \
+	    fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
+
+.PHONY: ps
+ps:				##@docker List containers
+	@echo "List containers: "
+	@docker-compose $(PROJECT_FLAG)-f $(YML) ps
+
+.PHONY: watch
+watch:				##@docker Watch container list
+	@echo "Watch container list: "
+	@watch docker-compose $(PROJECT_FLAG)-f $(YML) ps
+
+.PHONY: top
+top:				##@docker Top View for the docker container stack ("Ctrl-a Cctrl-\" to close all windows or "Ctrl-a k" to kill focused window)
+	@echo "List containers: "
+	@docker-compose $(PROJECT_FLAG)-f $(YML) ps -q 1>.top
+
+	@echo -e "term xterm-256color\nhardstatus off\nhardstatus alwayslastline\nstartup_message off\nvbell off\naltscreen on\nwindowlist string \"%4n %h%=%f\"\nsessionname dockertop" > .screen
+
+	@TOP_LINES_COUNTER=0 && \
+	while read line; \
+	do \
+		if [ ! $$TOP_LINES_COUNTER -eq 0 ]; then \
+				echo -e "split\nfocus down" >> .screen; \
+		fi; \
+		echo "screen $$TOP_LINES_COUNTER docker exec -it $$line sh -c 'export TERM=xterm && top'" >> .screen; \
+		((TOP_LINES_COUNTER = TOP_LINES_COUNTER + 1)); \
+	done < .top
+	@rm .top
+	@screen -c .screen && rm .screen
+
+.PHONY: logs
+logs:				##@docker Show logs
+	@echo "Print logs: "
+	@docker-compose $(PROJECT_FLAG)-f $(YML) logs
+
+.PHONY: verbose
+verbose:				##@docker Verbose output
+	@$(eval VERBOSE=true)
