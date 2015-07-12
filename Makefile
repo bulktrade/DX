@@ -193,7 +193,7 @@ watch:				##@docker Watch container list
 .PHONY: top
 top:				##@docker Top View for the docker container stack ("Ctrl-a Cctrl-\" to close all windows or "Ctrl-a k" to kill focused window)
 	@echo "List containers: "
-	@docker-compose $(PROJECT_FLAG)-f $(YML) ps -q 1>.top
+	@docker-compose $(PROJECT_FLAG)-f $(YML) ps | grep 2 | awk '{print $$1}' 1>.top
 
 	@echo -e "term xterm-256color\nhardstatus off\nhardstatus alwayslastline\nstartup_message off\nvbell off\naltscreen on\nwindowlist string \"%4n %h%=%f\"\nsessionname dockertop" > .screen
 
@@ -203,7 +203,7 @@ top:				##@docker Top View for the docker container stack ("Ctrl-a Cctrl-\" to c
 		if [ ! $$TOP_LINES_COUNTER -eq 0 ]; then \
 				echo -e "split\nfocus down" >> .screen; \
 		fi; \
-		echo "screen $$TOP_LINES_COUNTER docker exec -it $$line sh -c 'export TERM=xterm && top'" >> .screen; \
+		echo "screen -t $$line $$TOP_LINES_COUNTER docker exec -it $$line sh -c 'export TERM=xterm && top'" >> .screen; \
 		((TOP_LINES_COUNTER = TOP_LINES_COUNTER + 1)); \
 	done < .top
 	@rm .top
