@@ -111,25 +111,36 @@ help:				##@base Show this help
 	#
 	@perl -e '$(HELP_FUN)' $(MAKEFILE_LIST)
 
+.PHONY: start
+start:				##@docker Start container stack
+	@echo -n "Start container stack:"
+	@if $(VERBOSE); \
+    	then \
+    		docker-compose $(PROJECT_FLAG)-f $(YML) start; \
+    	else \
+    		docker-compose $(PROJECT_FLAG)-f $(YML) start 1>/dev/null 2> temp.log || touch temp.errors; \
+    	fi;
+	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
+
 .PHONY: run
 run: destroy				##@docker Run container stack
 	@echo -n "Run container stack:"
-	@if [ ! $(VERBOSE) ]; \
+	@if $(VERBOSE); \
     	then \
-    		docker-compose $(PROJECT_FLAG)-f $(YML) up 1>/dev/null 2> temp.log || touch temp.errors; \
-    	else \
     		docker-compose $(PROJECT_FLAG)-f $(YML) up; \
+    	else \
+    		docker-compose $(PROJECT_FLAG)-f $(YML) up 1>/dev/null 2> temp.log || touch temp.errors; \
     	fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
 .PHONY: rund
 rund: destroy				##@docker Run container stack as daemon
 	@echo -n "Run container stack as daemon: "
-	@if [ ! $(VERBOSE) ]; \
+	@if $(VERBOSE); \
     	then \
-    		docker-compose $(PROJECT_FLAG)-f $(YML) up -d 1>/dev/null 2> temp.log || touch temp.errors; \
-    	else \
     		docker-compose $(PROJECT_FLAG)-f $(YML) up -d; \
+    	else \
+    		docker-compose $(PROJECT_FLAG)-f $(YML) up -d 1>/dev/null 2> temp.log || touch temp.errors; \
     	fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
@@ -139,33 +150,33 @@ rundl: rund logs				##@docker Run container stack as daemon and show logs
 .PHONY: stop
 stop:				##@docker Stop container stack
 	@echo -n "Stop container stack: "
-	@if [ ! $(VERBOSE) ]; \
+	@if $(VERBOSE); \
         then \
-            docker-compose $(PROJECT_FLAG)-f $(YML) stop 1>/dev/null 2> temp.log || touch temp.errors; \
-        else \
             docker-compose $(PROJECT_FLAG)-f $(YML) stop; \
+        else \
+            docker-compose $(PROJECT_FLAG)-f $(YML) stop 1>/dev/null 2> temp.log || touch temp.errors; \
         fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
 .PHONY: kill
 kill:				##@docker Kill container stack
 	@echo -n "Kill container stack: "
-	@if [ ! $(VERBOSE) ]; \
+	@if $(VERBOSE); \
 	    then \
-	        docker-compose $(PROJECT_FLAG)-f $(YML) kill 1>/dev/null 2> temp.log || touch temp.errors; \
-	    else \
 	        docker-compose $(PROJECT_FLAG)-f $(YML) kill; \
+	    else \
+	        docker-compose $(PROJECT_FLAG)-f $(YML) kill 1>/dev/null 2> temp.log || touch temp.errors; \
 	    fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
 .PHONY: destroy
 destroy: kill				##@docker Destroy container stack
 	@echo -n "Remove container stack: "
-	@if [ ! $(VERBOSE) ]; \
+	@if $(VERBOSE); \
 	    then \
-	        docker-compose $(PROJECT_FLAG)-f $(YML) rm -v -f 1>/dev/null 2> temp.log || touch temp.errors; \
-	    else \
 	        docker-compose $(PROJECT_FLAG)-f $(YML) rm -v -f; \
+	    else \
+	        docker-compose $(PROJECT_FLAG)-f $(YML) rm -v -f 1>/dev/null 2> temp.log || touch temp.errors; \
 	    fi;
 	@if test -e temp.errors; then echo -e "$(ERROR_STRING)" && cat temp.log; elif test -s temp.log; then echo -e "$(WARN_STRING)" && cat temp.log; else echo -e "$(OK_STRING)"; fi; rm -f temp.errors temp.log
 
