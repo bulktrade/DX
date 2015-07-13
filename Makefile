@@ -212,7 +212,7 @@ top:				##@docker Top View for the docker container stack ("Ctrl-a Cctrl-\" to c
 .PHONY: logs
 logs:				##@docker Show logs
 	@echo "Print logs: "
-	@docker-compose $(PROJECT_FLAG)-f $(YML) logs
+	@docker-compose $(PROJECT_FLAG)-f $(YML) logs $(LOGS_OPTS)
 
 .PHONY: verbose
 verbose:				##@docker Verbose output
